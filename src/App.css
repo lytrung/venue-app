@@ -1,13 +1,18 @@
 @import 'https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css';
 
 .app{
-  max-width: 40em;
+  max-width: 60em;
   margin:1em auto;
 
 }
+.venues{
+  display: flex;
+  flex-wrap:wrap;
+}
 .venue{
   border:1px rgba(219,92,67, 1) solid;
-  margin-top:1em;
+  margin:0.5em;
+  flex: 1 0 15em;
 }
 .venue-name{
   color: rgba(38,113,127, 1);
@@ -28,41 +33,17 @@
   background-color: white;
   color:rgba(219,92,67, 1);
   font-weight: bold;
-  border:thin rgba(219,92,67, 1) solid;
+  border:thin rgba(219,92,67, 1) solid !important;
 }
 .venue-filter.active{
-  background-color: rgba(219,92,67, 1);
+  background-color: rgba(219,92,67, 1) !important;
   color:white;
   font-weight: bold;
 }
 
-.venue-popup{
-  position: fixed;
-  z-index: 100;
+.venue-popup-body img{
+  display: block;
   width: 100%;
-  height: 100%;
-  background-color: rgba(38,113,127, 0.2);
-  justify-content: center;
-  align-items: center;
-  top:0;
-  left:0;
-  display: none;
-}
-.venue-popup.show{
-  display: flex;
 }
 
-.venue-popup-body{
-  width: 90%;
-  max-width: 50em;
-  background-color: white;
-  border-radius: 0.5em;
-  padding:1em;
-}
-
-/*$Color-Theme-13-1-rgba: rgba(38,113,127, 1);
-$Color-Theme-13-2-rgba: rgba(9,74,89, 1);
-$Color-Theme-13-3-rgba: rgba(177,159,60, 1);
-$Color-Theme-13-4-rgba: rgba(242,172,40, 1);
-$Color-Theme-13-5-rgba: rgba(219,92,67, 1);*/
 

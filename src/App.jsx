@@ -1,7 +1,9 @@
 import React, {Component} from 'react';
 import Venue from './Venue.jsx';
 import Modal from 'react-bootstrap/Modal';
-import Button from 'react-bootstrap/Button';
+// import Button from 'react-bootstrap/Button';
+import ToggleButtonGroup from 'react-bootstrap/ToggleButtonGroup';
+import ToggleButton from 'react-bootstrap/ToggleButton';
 import './App.css';
 
 const version = '?v=20170901';
@@ -27,18 +29,45 @@ class App extends Component{
         //   types:['Food','Drink']
         // }
       ],
-      modalShow: true
+      modalShow: false,
+      venue:null,
+      filteredVenues:[]
     };
   }
 
-  handleModalShow = () => {
+  showModal = () => {
     this.setState({modalShow:true})
   }
-  handleModalHide = () => {
+  hideModal = () => {
     this.setState({modalShow:false})
   }
 
-  componentDidMount() {
+  loadVenue = (venueid) => {
+    this.setState({
+      venue:null
+    })
+
+    var venueUrl =  'https://api.foursquare.com/v2/venues/'+venueid+key;
+    fetch(venueUrl)
+      .then(res => res.json())
+      .then(result => {
+          var data = result.response.venue
+          var photo = data.bestPhoto;
+          var venue = {
+            name: data.name,
+            photo: photo.prefix+'200x200'+photo.suffix,
+            address: data.location.formattedAddress,
+            category: data.categories[0].name
+          };
+          
+          this.setState({
+            venue
+          })
+      })
+
+  }
+
+  loadVenues = () => {
 
     let exploreUrl = 'https://api.foursquare.com/v2/venues/explore'+key+'&ll=-36.8446152873055,174.76662397384644';
 
@@ -48,15 +77,13 @@ class App extends Component{
           return result.response.groups[0].items
       })
       .then((result) => {
-        console.log(result)
-
         return result.map((item) => {
 
           var venue = {
             id: item.venue.id,
             name: item.venue.name,
             address: item.venue.location.formattedAddress,
-            categories: item.venue.categories
+            category: item.venue.categories[0].name
           };
           return venue;
         })
@@ -64,75 +91,94 @@ class App extends Component{
       .then((result) => {
 
         this.setState({
-          venues:result
+          venues:result,
+          filteredVenues:result,
         })
       });
   }
+
+  handleVenueFilterChange = (value,e) => {
+
+    var venues = this.state.venues;
+    var filteredVenues = venues;
+
+    console.log(value);
+    if(value === 'food'){
+      filteredVenues = venues.filter((venue)=>{
+        var cat = venue.category;
+        return cat.includes('Café') || cat.includes('Restaurant') || cat.includes('Food')
+      });
+    }
+
+    if(value === 'drinks'){
+      filteredVenues = venues.filter((venue)=>{
+        var cat = venue.category;
+        return cat.includes('Bar') || cat.includes('Lounge')
+      });
+    }
+
+    if(value === 'others'){
+      filteredVenues = venues.filter((venue)=>{
+        var cat = venue.category;
+        return !(cat.includes('Café') || cat.includes('Bar') || cat.includes('Lounge') ||cat.includes('Restaurant') || cat.includes('Food'))
+      });
+    }
+
+    console.log(filteredVenues);
+    this.setState({
+      filteredVenues
+    })
+  }
+  componentDidMount(){
+    this.loadVenues();
+  }
+
   render() {
     return (
       <div className="app">
         <div className="container">
           <div className="venues">
            {
-            this.state.venues.map((venue) =>{
+            this.state.filteredVenues.map( (venue)=>{
               var venueProps = {
                 ...venue,
                 key:venue.id,
-
+                showModal: this.showModal,
+                loadVenue: this.loadVenue
               }
-              console.log(venueProps);
+           
               return <Venue {...venueProps}/>;
             })
            }
           </div> 
 
           <div className="venue-filters">
-            
-            <div className="btn-group btn-group-toggle" data-toggle="buttons">
-              <label className="btn venue-filter active">
-                <input type="radio" name="options" id="option1" autoComplete="off" checked="checked"/> Cafe
-              </label>
-              <label className="btn venue-filter">
-                <input type="radio" name="options" id="option2" autoComplete="off"/> Food
-              </label>
-              <label className="btn venue-filter">
-                <input type="radio" name="options" id="option3" autoComplete="off"/> Bar
-              </label>
-            </div>
-
+              <ToggleButtonGroup type="radio" name="venue-filter" onChange={this.handleVenueFilterChange} defaultValue="all">
+                <ToggleButton className="venue-filter" value="all">All</ToggleButton>
+                <ToggleButton className="venue-filter" value="food">Food</ToggleButton>
+                <ToggleButton className="venue-filter" value="drinks">Drinks</ToggleButton>
+                <ToggleButton className="venue-filter" value="others">Others</ToggleButton>
+              </ToggleButtonGroup>
           </div>
         </div>
 
 
-        <Modal show={this.state.modalShow} onHide={this.handleModalClose}>
-          <Modal.Header closeButton>
-            <Modal.Title>Modal heading</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>Woohoo, you're reading this text in a modal!</Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={this.handleModalClose}>
-              Close
-            </Button>
-            <Button variant="primary" onClick={this.handleModalClose}>
-              Save Changes
-            </Button>
-          </Modal.Footer>
+        <Modal show={this.state.modalShow} onHide={ (e)=>{this.hideModal()} }>
+          <Modal.Body>
+            { this.state.venue !== null ? (<div className="venue-popup-body row">
+              <div className="col-6">
+                <h1 className="venue-name">{this.state.venue.name}</h1>
+                <p>{this.state.venue.address[0]}</p>
+                <p>{this.state.venue.address[1]}</p>
+                <p><span className="badge venue-type">{this.state.venue.category}</span></p>
+              </div>
+
+              <div className="col-6">
+                  <img src={this.state.venue.photo} className="img-fluid" alt="Responsive image"/>
+              </div>
+            </div>) : 'Loading...'}
+          </Modal.Body>
         </Modal>
-
-{/*        <div className="venue-popup">
-            <div className="venue-popup-body row">
-              <div className="col-8">
-                  <h1 className="venue-name">Cafe Crema</h1>
-                  <p>Cafe near school</p>
-                  <p><span className="badge venue-type">Cafe</span><span className="badge venue-type">Food</span></p> 
-              </div>
-
-              <div className="col-4">
-                  <img src="http://lorempixel.com/400/400/" className="img-fluid" alt="Responsive image"/>
-              </div>
-            </div>
-
-        </div>*/}
       </div>
     );
   }
